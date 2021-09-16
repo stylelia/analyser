@@ -3,15 +3,44 @@ package analyser
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 )
 
-func HandleEvent() error {
-	return handle()
+type Handler struct {
+	Client *http.Client
 }
 
-func handle() error {
+func NewHandler(client *http.Client) Handler {
+	return Handler{
+		Client: client,
+	}
+}
+
+func HandleEvent() error {
+	client := &http.Client{}
+
+	handler := NewHandler(client)
+
+	return handler.handle()
+}
+
+func (h *Handler) handle() error {
 	// Fetch the latest default commit sha and check it against cache
+	// TODO: Setup cache
+	org := os.Getenv("ORGANISATION")
+	name := os.Getenv("NAME")
+
+	repo, err := getRepo(org, name, h.Client)
+	if err != nil {
+		return err
+	}
+
+	err = repo.getLastCommit(h.Client)
+	if err != nil {
+		return err
+	}
 
 	// Check cache for cookstyle for a given repo.
 	// If exists, check version - if equal and if commit sha equal to cache, leave app
@@ -38,8 +67,6 @@ type Repository struct {
 	Name          string
 	DefaultBranch string
 	LatestCommit  string
-
-	Client *http.Client
 }
 
 type GetRepository struct {
@@ -50,11 +77,16 @@ type GetLastCommit struct {
 	Sha string `json:"sha"`
 }
 
+type GetCookbook struct {
+	Version string `json:"version"`
+}
+
 const (
-	mainApi string = "https://api.github.com"
+	mainApi     string = "https://api.github.com"
+	cookbookApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
 )
 
-func getRepo(org, name string) (Repository, error) {
+func getRepo(org, name string, client *http.Client) (Repository, error) {
 	// GET /repos/{owner}/{repo}
 	var r Repository
 
@@ -64,10 +96,6 @@ func getRepo(org, name string) (Repository, error) {
 	if err != nil {
 		return r, err
 	}
-
-	// NOTE: This can probably go outside
-	// We might have to set up oAuth2 here + timeout
-	client := &http.Client{}
 
 	response, err := client.Do(request)
 	if err != nil {
@@ -82,12 +110,10 @@ func getRepo(org, name string) (Repository, error) {
 	r.Name = name
 	r.DefaultBranch = getRepoStruct.DefaultBranch
 
-	r.Client = client
-
 	return r, nil
 }
 
-func (r *Repository) getLastCommit() error {
+func (r *Repository) getLastCommit(client *http.Client) error {
 	// GET /repos/:owner/:repo/commits/:branch
 	getLastCommitUri := fmt.Sprintf("%s/repos/%s/%s/commits/%s", mainApi, r.Org, r.Name, r.DefaultBranch)
 
@@ -96,7 +122,7 @@ func (r *Repository) getLastCommit() error {
 		return err
 	}
 
-	response, err := r.Client.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -111,4 +137,27 @@ func (r *Repository) getLastCommit() error {
 	r.LatestCommit = getLastCommitStruct.Sha
 
 	return nil
+}
+
+func getLatestCookbook(client *http.Client) (string, error) {
+	request, err := http.NewRequest(http.MethodGet, cookbookApi, nil)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	var getCookbookVersion GetCookbook
+	err = json.NewDecoder(response.Body).Decode(&getCookbookVersion)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("Version: %+v", getCookbookVersion)
+
+	return getCookbookVersion.Version, nil
 }
