@@ -3,7 +3,6 @@ package analyser
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -39,10 +38,16 @@ type Repository struct {
 	Name          string
 	DefaultBranch string
 	LatestCommit  string
+
+	Client *http.Client
 }
 
 type GetRepository struct {
 	DefaultBranch string `json:"default_branch"`
+}
+
+type GetLastCommit struct {
+	Sha string `json:"sha"`
 }
 
 const (
@@ -70,27 +75,40 @@ func getRepo(org, name string) (Repository, error) {
 	}
 	defer response.Body.Close()
 
-	// NOTE: I did it better last time, can't recall now.
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return r, err
-	}
-
 	var getRepoStruct GetRepository
-	err = json.Unmarshal(body, &getRepoStruct)
-	if err != nil {
-		return r, err
-	}
+	err = json.NewDecoder(response.Body).Decode(&getRepoStruct)
 
 	r.Org = org
 	r.Name = name
 	r.DefaultBranch = getRepoStruct.DefaultBranch
 
+	r.Client = client
+
 	return r, nil
 }
 
 func (r *Repository) getLastCommit() error {
-	// GET /repos/:owner/:repo/commits/master
+	// GET /repos/:owner/:repo/commits/:branch
+	getLastCommitUri := fmt.Sprintf("%s/repos/%s/%s/commits/%s", mainApi, r.Org, r.Name, r.DefaultBranch)
+
+	request, err := http.NewRequest(http.MethodGet, getLastCommitUri, nil)
+	if err != nil {
+		return err
+	}
+
+	response, err := r.Client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	var getLastCommitStruct GetLastCommit
+	err = json.NewDecoder(response.Body).Decode(&getLastCommitStruct)
+	if err != nil {
+		return err
+	}
+
+	r.LatestCommit = getLastCommitStruct.Sha
 
 	return nil
 }

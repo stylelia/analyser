@@ -27,3 +27,16 @@ func TestGetRepo(t *testing.T) {
 		assert.Equal(t, expected, repo.DefaultBranch)
 	})
 }
+
+func TestGetLastCommit(t *testing.T) {
+	t.Run("GetLastCommit fetches the last commit on Main branch on https://github.com/sous-chefs/golang", func(t *testing.T) {
+		org := "sous-chefs"
+		name := "golang"
+
+		repo, err := getRepo(org, name)
+		assert.NoError(t, err)
+
+		err = repo.getLastCommit()
+		assert.NoError(t, err)
+	})
+}
