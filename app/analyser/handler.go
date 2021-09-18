@@ -5,11 +5,29 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 )
+
+// Type Key defines a valid key which can be fetched from Redis
+type Key string
+
+const (
+	Commit   Key = "Commit"
+	Cookbook Key = "Cookbook"
+)
+
+// String returns string value of Key
+func (k Key) String() string {
+	return string(k)
+}
+
+// Interface for KV store
+type KeyValueStore interface {
+	GetKey(key Key) (string, error)
+	UpdateKey(key Key, value string) error
+}
 
 type Handler struct {
 	Client *http.Client
@@ -45,17 +63,30 @@ func (h *Handler) handle() error {
 		return err
 	}
 
-	// TODO: Fetch latest commit from cache and test against
+	// Setup redis
+	redis := Redis{}
 
-	// Check cache for cookstyle for a given repo.
-	// If exists, check version - if equal and if commit sha equal to cache, leave app
-	ver, err := getLatestCookbook(h.Client)
+	latestCommit, err := redis.GetKey(Commit)
 	if err != nil {
 		return err
 	}
 
-	// TODO: Fetch latest cookstyle version from cache and test against
-	log.Printf("%v\n", ver) // compiler moans
+	// Check cache for cookstyle for a given repo.
+	// If exists, check version - if equal and if commit sha equal to cache, leave app
+	cookbookVersion, err := getLatestCookbook(h.Client)
+	if err != nil {
+		return err
+	}
+
+	latestCookbook, err := redis.GetKey(Cookbook)
+	if err != nil {
+		return err
+	}
+
+	if repo.LatestCommit == latestCommit && cookbookVersion == latestCookbook {
+		// log that we're ending the lifecycle here
+		return nil
+	}
 
 	// If not exists or version is different or sha is different, clone the repo
 	// TODO: This requires an access to a valid SSH key on the lambda
@@ -72,18 +103,26 @@ func (h *Handler) handle() error {
 
 	// If cookstyle finds a change, create a new branch 'styleila/cookstyle_<version>'
 	if out.Summary.OffenseCount > 0 {
-		err = createBranch(ver)
+		err = createBranch(cookbookVersion)
 		if err != nil {
 			return err
 		}
 	}
-	// If no change, update cache with cookstyle and default branch sha
-	// TODO: this can be performed when cache is ready
 
 	// Raise a PR for that change
 	// put in pr body nice message based on json response from cookstyle
+	// TODO: Write a printer for PR
 
 	// update cache with default branch sha & cookstyle version
+	err = redis.UpdateKey(Commit, repo.LatestCommit)
+	if err != nil {
+		return err
+	}
+
+	err = redis.UpdateKey(Cookbook, latestCookbook)
+	if err != nil {
+		return err
+	}
 
 	// see: https://github.com/Xorima/github-cookstyle-runner/blob/main/app/entrypoint.ps1#L139 to L157
 
@@ -267,4 +306,15 @@ func getLatestCookbook(client *http.Client) (string, error) {
 	}
 
 	return getCookbookVersion.Version, nil
+}
+
+// Redis setup for now
+type Redis struct{}
+
+func (r *Redis) GetKey(key Key) (string, error) {
+	return key.String(), nil
+}
+
+func (r *Redis) UpdateKey(key Key, value string) error {
+	return nil
 }
