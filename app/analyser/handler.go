@@ -11,6 +11,7 @@ import (
 )
 
 // Type Key defines a valid key which can be fetched from Redis
+// Key should be OrgName/Repo name
 type Key string
 
 const (
@@ -27,6 +28,8 @@ func (k Key) String() string {
 type KeyValueStore interface {
 	GetKey(key Key) (string, error)
 	UpdateKey(key Key, value string) error
+	GetCookstyleVersion(key Key) (string, error)
+	UpdateCookstyleVersion(key Key) (string, error)
 }
 
 type Handler struct {
@@ -316,5 +319,13 @@ func (r *Redis) GetKey(key Key) (string, error) {
 }
 
 func (r *Redis) UpdateKey(key Key, value string) error {
+	return nil
+}
+
+func (r *Redis) GetCookstyleVersion(key Key) (string, error) {
+	return key.String(), nil
+}
+
+func (r *Redis) UpdateCookstyleVersion(key Key, value string) error {
 	return nil
 }
