@@ -96,11 +96,9 @@ func getLatestCookbook(client *http.Client) (string, error) {
 }
 
 func (c *CookbookCheck) PrintMessage(cookstyleVersion string) string {
-	var (
-		logs string
-	)
 	header := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\n", cookstyleVersion, c.Summary.OffenseCount)
 
+	var logs string
 	for _, part := range c.Files {
 		var partial string
 		for _, offenses := range part.Offenses {
