@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os/exec"
 )
@@ -92,4 +93,21 @@ func getLatestCookbook(client *http.Client) (string, error) {
 	}
 
 	return getCookbookVersion.Version, nil
+}
+
+func (c *CookbookCheck) PrintMessage(cookstyleVersion string) string {
+	var (
+		logs string
+	)
+	header := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\n", cookstyleVersion, c.Summary.OffenseCount)
+
+	for _, part := range c.Files {
+		var partial string
+		for _, offenses := range part.Offenses {
+			partial += fmt.Sprintf("Issue found and resolved with %s\n\n%s\n\n", part.Path, offenses.Message)
+		}
+		logs += partial
+	}
+
+	return header + logs
 }
