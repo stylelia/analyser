@@ -1,11 +1,43 @@
 package analyser
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGetLatestCookbook(t *testing.T) {
+	expectedVersion := "v.10.10.10"
+
+	cookbookHandler := func(w http.ResponseWriter, r *http.Request) {
+		output := GetCookbook{
+			Version: expectedVersion,
+		}
+		response, err := json.Marshal(output)
+		if err != nil {
+			// we should never panic here.
+			// we should never reach here.
+			// we shouldn't use panic.
+			panic(err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(response)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(cookbookHandler))
+	defer server.Close()
+
+	client := &http.Client{}
+
+	ver, err := getLatestCookbook(server.URL, client)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedVersion, ver)
+}
 
 func TestPrintMessage(t *testing.T) {
 	cookstyleVersion := "v10.2.10"

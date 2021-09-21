@@ -45,13 +45,3 @@ func TestGetLastCommit(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
-
-func TestGetLatestCookbook(t *testing.T) {
-	client := &http.Client{}
-
-	t.Run("GetLatestCookbook returns a valid version", func(t *testing.T) {
-		ver, err := getLatestCookbook(client)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, ver)
-	})
-}

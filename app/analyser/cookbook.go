@@ -9,10 +9,6 @@ import (
 	"os/exec"
 )
 
-const (
-	cookbookApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
-)
-
 // Cookbook structs
 type GetCookbook struct {
 	Version string `json:"version"`
@@ -74,7 +70,7 @@ func runCookbook() (CookbookCheck, error) {
 	return c, nil
 }
 
-func getLatestCookbook(client *http.Client) (string, error) {
+func getLatestCookbook(cookbookApi string, client *http.Client) (string, error) {
 	request, err := http.NewRequest(http.MethodGet, cookbookApi, nil)
 	if err != nil {
 		return "", err

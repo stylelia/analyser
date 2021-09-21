@@ -10,6 +10,8 @@ import (
 const (
 	Commit   string = "Commit"
 	Cookbook string = "Cookbook"
+
+	cookbookApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
 )
 
 // Interface for KV store
@@ -62,7 +64,7 @@ func (h *Handler) handle() error {
 
 	// Check cache for cookstyle for a given repo.
 	// If exists, check version - if equal and if commit sha equal to cache, leave app
-	cookbookVersion, err := getLatestCookbook(h.Client)
+	cookbookVersion, err := getLatestCookbook(cookbookApi, h.Client)
 	if err != nil {
 		return err
 	}
