@@ -54,7 +54,7 @@ func runCookbook() (CookbookCheck, error) {
 		cmdOut bytes.Buffer
 	)
 
-	cmd := exec.Command("cookstyle", "-a", "format", "json")
+	cmd := exec.Command("cookstyle", "-a", "--format", "json")
 	cmd.Stdout = &cmdOut
 
 	err := cmd.Run()
