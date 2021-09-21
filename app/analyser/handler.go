@@ -1,6 +1,7 @@
 package analyser
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -11,6 +12,7 @@ const (
 	Commit   string = "Commit"
 	Cookbook string = "Cookbook"
 
+	githubApi   string = "https://api.github.com"
 	cookbookApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
 )
 
@@ -44,12 +46,18 @@ func (h *Handler) handle() error {
 	org := os.Getenv("ORGANISATION")
 	name := os.Getenv("NAME")
 
-	repo, err := getRepo(org, name, h.Client)
+	githubDefaultBranchEndpoint := fmt.Sprintf("%s/repos/%s/%s", githubApi, org, name)
+
+	branch, err := getDefaultBranch(githubDefaultBranchEndpoint, h.Client)
 	if err != nil {
 		return err
 	}
 
-	err = repo.getLastCommit(h.Client)
+	repo := NewRepo(org, name, branch)
+
+	githubLastCommitEndpoint := repo.buildCommitEndpoint(githubApi)
+
+	err = repo.getLastCommit(githubLastCommitEndpoint, h.Client)
 	if err != nil {
 		return err
 	}

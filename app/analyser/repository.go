@@ -13,6 +13,7 @@ type Repository struct {
 	Name          string
 	DefaultBranch string
 	LatestCommit  string
+	GithubApi     string
 }
 
 type GetRepository struct {
@@ -23,43 +24,37 @@ type GetLastCommit struct {
 	Sha string `json:"sha"`
 }
 
-// Endpoints
-const (
-	mainApi string = "https://api.github.com"
-)
+func NewRepo(org, name, defaultBranch string) Repository {
+	return Repository{
+		Org:           org,
+		Name:          name,
+		DefaultBranch: defaultBranch,
+	}
+}
 
-func getRepo(org, name string, client *http.Client) (Repository, error) {
-	// GET /repos/{owner}/{repo}
-	var r Repository
-
-	getRepoUri := fmt.Sprintf("%s/repos/%s/%s", mainApi, org, name)
-
-	request, err := http.NewRequest(http.MethodGet, getRepoUri, nil)
+func getDefaultBranch(endpoint string, client *http.Client) (string, error) {
+	request, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return r, err
+		return "", err
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return r, err
+		return "", err
 	}
 	defer response.Body.Close()
 
 	var getRepoStruct GetRepository
 	err = json.NewDecoder(response.Body).Decode(&getRepoStruct)
+	if err != nil {
+		return "", err
+	}
 
-	r.Org = org
-	r.Name = name
-	r.DefaultBranch = getRepoStruct.DefaultBranch
-
-	return r, nil
+	return getRepoStruct.DefaultBranch, nil
 }
 
-func (r *Repository) getLastCommit(client *http.Client) error {
-	// GET /repos/:owner/:repo/commits/:branch
-	getLastCommitUri := fmt.Sprintf("%s/repos/%s/%s/commits/%s", mainApi, r.Org, r.Name, r.DefaultBranch)
-
-	request, err := http.NewRequest(http.MethodGet, getLastCommitUri, nil)
+func (r *Repository) getLastCommit(endpoint string, client *http.Client) error {
+	request, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err
 	}
@@ -79,6 +74,10 @@ func (r *Repository) getLastCommit(client *http.Client) error {
 	r.LatestCommit = getLastCommitStruct.Sha
 
 	return nil
+}
+
+func (r *Repository) buildCommitEndpoint(githubApi string) string {
+	return fmt.Sprintf("%s/repos/%s/%s/commits/%s", githubApi, r.Org, r.Name, r.DefaultBranch)
 }
 
 func (r *Repository) clone() error {
