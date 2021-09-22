@@ -1,3 +1,3 @@
 # Analyser
 
-Check commit sha &amp; cookbook against cache
+Check commit sha &amp; cookstyle against cache

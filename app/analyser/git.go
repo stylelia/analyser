@@ -5,8 +5,8 @@ import (
 	"os/exec"
 )
 
-func createBranchName(cookbookVersion string) string {
-	return fmt.Sprintf("stylelia/cookstyle_%s", cookbookVersion)
+func createBranchName(cookstyleVersion string) string {
+	return fmt.Sprintf("stylelia/cookstyle_%s", cookstyleVersion)
 }
 
 func buildBranchCommand(message string) *exec.Cmd {

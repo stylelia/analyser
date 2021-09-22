@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var cookbookJSON CookbookCheck = CookbookCheck{
+var cookstyleJSON CookstyleCheck = CookstyleCheck{
 	Metadata: Metadata{},
 	Files: []Files{
 		Files{
@@ -39,14 +39,14 @@ var cookbookJSON CookbookCheck = CookbookCheck{
 	},
 }
 
-type MockRunCookbookCommand struct{}
+type MockRunCookstyleCommand struct{}
 
-func (m *MockRunCookbookCommand) Run() error {
+func (m *MockRunCookstyleCommand) Run() error {
 	return nil
 }
 
-func (m *MockRunCookbookCommand) Output() ([]byte, error) {
-	out, err := json.Marshal(cookbookJSON)
+func (m *MockRunCookstyleCommand) Output() ([]byte, error) {
+	out, err := json.Marshal(cookstyleJSON)
 	if err != nil {
 		// we should, nor we never will panic here
 		panic(err)
@@ -54,30 +54,30 @@ func (m *MockRunCookbookCommand) Output() ([]byte, error) {
 	return out, nil
 }
 
-type MockRunCookbookCommand_Error struct{}
+type MockRunCookstyleCommand_Error struct{}
 
-func (m *MockRunCookbookCommand_Error) Run() error {
+func (m *MockRunCookstyleCommand_Error) Run() error {
 	return errors.New("test error")
 }
 
-func (m MockRunCookbookCommand_Error) Output() ([]byte, error) {
+func (m MockRunCookstyleCommand_Error) Output() ([]byte, error) {
 	return nil, errors.New("test error")
 }
 
-func TestRunCookbook(t *testing.T) {
-	t.Run("runCookbook throws an error on a faulty command", func(t *testing.T) {
-		faulty := &MockRunCookbookCommand_Error{}
+func TestRunCookstyle(t *testing.T) {
+	t.Run("runCookstyle throws an error on a faulty command", func(t *testing.T) {
+		faulty := &MockRunCookstyleCommand_Error{}
 
-		_, err := runCookbook(faulty)
+		_, err := runCookstyle(faulty)
 		assert.Error(t, err)
 	})
 
-	t.Run("runCookbook doesn't return any error on a valid command and returns a valid JSON", func(t *testing.T) {
-		runner := &MockRunCookbookCommand{}
+	t.Run("runCookstyle doesn't return any error on a valid command and returns a valid JSON", func(t *testing.T) {
+		runner := &MockRunCookstyleCommand{}
 
-		out, err := runCookbook(runner)
+		out, err := runCookstyle(runner)
 		assert.NoError(t, err)
-		assert.Equal(t, cookbookJSON, out)
+		assert.Equal(t, cookstyleJSON, out)
 	})
 }
 

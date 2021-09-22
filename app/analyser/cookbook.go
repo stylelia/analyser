@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-// Cookbook structs
-type GetCookbook struct {
+// Cookstyle structs
+type CookstyleMetadata struct {
 	Version string `json:"version"`
 }
 
-// Cookbook check payload
-type CookbookCheck struct {
+// Cookstyle check payload
+type CookstyleCheck struct {
 	Metadata Metadata `json:"metadata"`
 	Files    []Files  `json:"files"`
 	Summary  Summary  `json:"summary"`
@@ -45,8 +45,8 @@ type Summary struct {
 	InspectedFileCount int `json:"inspected_file_count"`
 }
 
-func runCookbook(exec CommandRunner) (CookbookCheck, error) {
-	var c CookbookCheck
+func runCookstyle(exec CommandRunner) (CookstyleCheck, error) {
+	var c CookstyleCheck
 
 	// cmd := exec.Command("cookstyle", "-a", "--format", "json")
 	output, err := exec.Output()
@@ -62,8 +62,8 @@ func runCookbook(exec CommandRunner) (CookbookCheck, error) {
 	return c, nil
 }
 
-func getLatestCookbook(cookbookApi string, client *http.Client) (string, error) {
-	request, err := http.NewRequest(http.MethodGet, cookbookApi, nil)
+func getLatestCookstyle(cookstyleApi string, client *http.Client) (string, error) {
+	request, err := http.NewRequest(http.MethodGet, cookstyleApi, nil)
 	if err != nil {
 		return "", err
 	}
@@ -74,16 +74,16 @@ func getLatestCookbook(cookbookApi string, client *http.Client) (string, error) 
 	}
 	defer response.Body.Close()
 
-	var getCookbookVersion GetCookbook
-	err = json.NewDecoder(response.Body).Decode(&getCookbookVersion)
+	var getCookstyleVersion CookstyleMetadata
+	err = json.NewDecoder(response.Body).Decode(&getCookstyleVersion)
 	if err != nil {
 		return "", err
 	}
 
-	return getCookbookVersion.Version, nil
+	return getCookstyleVersion.Version, nil
 }
 
-func (c *CookbookCheck) PrintMessage(cookstyleVersion string) string {
+func (c *CookstyleCheck) PrintMessage(cookstyleVersion string) string {
 	header := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\n", cookstyleVersion, c.Summary.OffenseCount)
 
 	var logs string
