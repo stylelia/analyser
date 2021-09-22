@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/styleila/analyser/pkg/redis"
 )
@@ -20,6 +21,12 @@ const (
 type KeyValueStore interface {
 	GetKey(key string) (string, error)
 	UpdateKey(key, value string) error
+}
+
+// Interface for all exec.Command stuff
+type CommandRunner interface {
+	Run() error
+	Output() ([]byte, error)
 }
 
 type Handler struct {
@@ -89,20 +96,24 @@ func (h *Handler) handle() error {
 
 	// If not exists or version is different or sha is different, clone the repo
 	// TODO: This requires an access to a valid SSH key on the lambda
-	err = repo.clone()
+	repoUri := fmt.Sprintf("git@github.com:%s/%s.git", repo.Org, repo.Name)
+	cloneRepoRunner := exec.Command("git", "clone", repoUri)
+	err = repo.clone(cloneRepoRunner)
 	if err != nil {
 		return err
 	}
 
 	// run 'cookstyle -a --format json'
-	out, err := runCookbook()
+	runner := exec.Command("cookstyle", "-a", "--format", "json")
+	out, err := runCookbook(runner)
 	if err != nil {
 		return err
 	}
 
 	// If cookstyle finds a change, create a new branch 'styleila/cookstyle_<version>'
+	branchRunner := buildBranchCommand(createBranchName(cookbookVersion))
 	if out.Summary.OffenseCount > 0 {
-		err = createBranch(cookbookVersion)
+		err = createBranch(branchRunner)
 		if err != nil {
 			return err
 		}

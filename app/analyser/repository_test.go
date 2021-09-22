@@ -2,12 +2,84 @@ package analyser
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+var cookbookJSON CookbookCheck = CookbookCheck{
+	Metadata: Metadata{},
+	Files: []Files{
+		Files{
+			Path: "/tmp/path",
+			Offenses: []Offenses{
+				Offenses{
+					Severity:    "High",
+					Message:     "First message",
+					Correctable: true,
+				},
+			},
+		},
+		Files{
+			Path: "/tmp/another",
+			Offenses: []Offenses{
+				Offenses{
+					Severity:    "Medium",
+					Message:     "Second message",
+					Correctable: true,
+				},
+			},
+		},
+	},
+	Summary: Summary{
+		OffenseCount: 2,
+	},
+}
+
+type MockRunCookbookCommand struct{}
+
+func (m *MockRunCookbookCommand) Run() error {
+	return nil
+}
+
+func (m *MockRunCookbookCommand) Output() ([]byte, error) {
+	out, err := json.Marshal(cookbookJSON)
+	if err != nil {
+		// we should, nor we never will panic here
+		panic(err)
+	}
+	return out, nil
+}
+
+type MockRunCookbookCommand_Error struct{}
+
+func (m *MockRunCookbookCommand_Error) Run() error {
+	return errors.New("test error")
+}
+
+func (m MockRunCookbookCommand_Error) Output() ([]byte, error) {
+	return nil, errors.New("test error")
+}
+
+func TestRunCookbook(t *testing.T) {
+	t.Run("runCookbook throws an error on a faulty command", func(t *testing.T) {
+		faulty := &MockRunCookbookCommand_Error{}
+
+		_, err := runCookbook(faulty)
+		assert.Error(t, err)
+	})
+
+	t.Run("runCookbook doesn't return any error on a valid command and returns a valid JSON", func(t *testing.T) {
+		runner := &MockRunCookbookCommand{}
+
+		out, err := runCookbook(runner)
+		assert.NoError(t, err)
+		assert.Equal(t, cookbookJSON, out)
+	})
+}
 
 func TestGetDefaultBranch(t *testing.T) {
 	defaultBranch := "ObiWanKenobiHadTheHigherGround"
@@ -77,4 +149,8 @@ func TestBuildCommitEndpoint(t *testing.T) {
 	endpoint := repo.buildCommitEndpoint(githubApi)
 
 	assert.Equal(t, expected, endpoint)
+}
+
+func TestClone(t *testing.T) {
+
 }

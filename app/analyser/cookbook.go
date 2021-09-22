@@ -1,12 +1,9 @@
 package analyser
 
 import (
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os/exec"
 )
 
 // Cookbook structs
@@ -48,21 +45,16 @@ type Summary struct {
 	InspectedFileCount int `json:"inspected_file_count"`
 }
 
-func runCookbook() (CookbookCheck, error) {
-	var (
-		c      CookbookCheck
-		cmdOut bytes.Buffer
-	)
+func runCookbook(exec CommandRunner) (CookbookCheck, error) {
+	var c CookbookCheck
 
-	cmd := exec.Command("cookstyle", "-a", "--format", "json")
-	cmd.Stdout = &cmdOut
-
-	err := cmd.Run()
+	// cmd := exec.Command("cookstyle", "-a", "--format", "json")
+	output, err := exec.Output()
 	if err != nil {
 		return c, err
 	}
 
-	err = gob.NewDecoder(&cmdOut).Decode(&c)
+	err = json.Unmarshal(output, &c)
 	if err != nil {
 		return c, err
 	}
