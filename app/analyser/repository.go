@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os/exec"
 )
 
 // Repository structs
@@ -80,10 +79,8 @@ func (r *Repository) buildCommitEndpoint(githubApi string) string {
 	return fmt.Sprintf("%s/repos/%s/%s/commits/%s", githubApi, r.Org, r.Name, r.DefaultBranch)
 }
 
-func (r *Repository) clone() error {
-	repoUri := fmt.Sprintf("git@github.com:%s/%s.git", r.Org, r.Name)
-
-	err := exec.Command("git", "clone", repoUri).Run()
+func (r *Repository) clone(exec CommandRunner) error {
+	err := exec.Run()
 	if err != nil {
 		return err
 	}

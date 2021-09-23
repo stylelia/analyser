@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetLatestCookbook(t *testing.T) {
+func TestGetLatestCookstyle(t *testing.T) {
 	expectedVersion := "v.10.10.10"
 
-	cookbookHandler := func(w http.ResponseWriter, r *http.Request) {
-		output := GetCookbook{
+	cookstyleHandler := func(w http.ResponseWriter, r *http.Request) {
+		output := CookstyleMetadata{
 			Version: expectedVersion,
 		}
 		response, err := json.Marshal(output)
@@ -29,12 +29,12 @@ func TestGetLatestCookbook(t *testing.T) {
 		w.Write(response)
 	}
 
-	server := httptest.NewServer(http.HandlerFunc(cookbookHandler))
+	server := httptest.NewServer(http.HandlerFunc(cookstyleHandler))
 	defer server.Close()
 
 	client := &http.Client{}
 
-	ver, err := getLatestCookbook(server.URL, client)
+	ver, err := getLatestCookstyle(server.URL, client)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedVersion, ver)
 }
@@ -42,7 +42,7 @@ func TestGetLatestCookbook(t *testing.T) {
 func TestPrintMessage(t *testing.T) {
 	cookstyleVersion := "v10.2.10"
 
-	cookbookJSON := CookbookCheck{
+	cookstyleJSON := CookstyleCheck{
 		Metadata: Metadata{},
 		Files: []Files{
 			Files{
@@ -71,10 +71,10 @@ func TestPrintMessage(t *testing.T) {
 		},
 	}
 
-	validMessage := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\nIssue found and resolved with %s\n\n%s\n\nIssue found and resolved with %s\n\n%s\n\n", cookstyleVersion, cookbookJSON.Summary.OffenseCount, cookbookJSON.Files[0].Path, cookbookJSON.Files[0].Offenses[0].Message, cookbookJSON.Files[1].Path, cookbookJSON.Files[1].Offenses[0].Message)
+	validMessage := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\nIssue found and resolved with %s\n\n%s\n\nIssue found and resolved with %s\n\n%s\n\n", cookstyleVersion, cookstyleJSON.Summary.OffenseCount, cookstyleJSON.Files[0].Path, cookstyleJSON.Files[0].Offenses[0].Message, cookstyleJSON.Files[1].Path, cookstyleJSON.Files[1].Offenses[0].Message)
 
 	t.Run("Print message returns a valid message", func(t *testing.T) {
-		out := cookbookJSON.PrintMessage(cookstyleVersion)
+		out := cookstyleJSON.PrintMessage(cookstyleVersion)
 		assert.Equal(t, validMessage, out)
 	})
 }

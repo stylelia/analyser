@@ -2,12 +2,84 @@ package analyser
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+var cookstyleJSON CookstyleCheck = CookstyleCheck{
+	Metadata: Metadata{},
+	Files: []Files{
+		Files{
+			Path: "/tmp/path",
+			Offenses: []Offenses{
+				Offenses{
+					Severity:    "High",
+					Message:     "First message",
+					Correctable: true,
+				},
+			},
+		},
+		Files{
+			Path: "/tmp/another",
+			Offenses: []Offenses{
+				Offenses{
+					Severity:    "Medium",
+					Message:     "Second message",
+					Correctable: true,
+				},
+			},
+		},
+	},
+	Summary: Summary{
+		OffenseCount: 2,
+	},
+}
+
+type MockRunCookstyleCommand struct{}
+
+func (m *MockRunCookstyleCommand) Run() error {
+	return nil
+}
+
+func (m *MockRunCookstyleCommand) Output() ([]byte, error) {
+	out, err := json.Marshal(cookstyleJSON)
+	if err != nil {
+		// we should, nor we never will panic here
+		panic(err)
+	}
+	return out, nil
+}
+
+type MockRunCookstyleCommand_Error struct{}
+
+func (m *MockRunCookstyleCommand_Error) Run() error {
+	return errors.New("test error")
+}
+
+func (m MockRunCookstyleCommand_Error) Output() ([]byte, error) {
+	return nil, errors.New("test error")
+}
+
+func TestRunCookstyle(t *testing.T) {
+	t.Run("runCookstyle throws an error on a faulty command", func(t *testing.T) {
+		faulty := &MockRunCookstyleCommand_Error{}
+
+		_, err := runCookstyle(faulty)
+		assert.Error(t, err)
+	})
+
+	t.Run("runCookstyle doesn't return any error on a valid command and returns a valid JSON", func(t *testing.T) {
+		runner := &MockRunCookstyleCommand{}
+
+		out, err := runCookstyle(runner)
+		assert.NoError(t, err)
+		assert.Equal(t, cookstyleJSON, out)
+	})
+}
 
 func TestGetDefaultBranch(t *testing.T) {
 	defaultBranch := "ObiWanKenobiHadTheHigherGround"
@@ -77,4 +149,8 @@ func TestBuildCommitEndpoint(t *testing.T) {
 	endpoint := repo.buildCommitEndpoint(githubApi)
 
 	assert.Equal(t, expected, endpoint)
+}
+
+func TestClone(t *testing.T) {
+
 }

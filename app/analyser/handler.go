@@ -4,22 +4,29 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/styleila/analyser/pkg/redis"
 )
 
 const (
-	Commit   string = "Commit"
-	Cookbook string = "Cookbook"
+	Commit    string = "Commit"
+	Cookstyle string = "Cookstyle"
 
-	githubApi   string = "https://api.github.com"
-	cookbookApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
+	githubApi    string = "https://api.github.com"
+	cookstyleApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
 )
 
 // Interface for KV store
 type KeyValueStore interface {
 	GetKey(key string) (string, error)
 	UpdateKey(key, value string) error
+}
+
+// Interface for all exec.Command stuff
+type CommandRunner interface {
+	Run() error
+	Output() ([]byte, error)
 }
 
 type Handler struct {
@@ -72,37 +79,41 @@ func (h *Handler) handle() error {
 
 	// Check cache for cookstyle for a given repo.
 	// If exists, check version - if equal and if commit sha equal to cache, leave app
-	cookbookVersion, err := getLatestCookbook(cookbookApi, h.Client)
+	cookstyleVersion, err := getLatestCookstyle(cookstyleApi, h.Client)
 	if err != nil {
 		return err
 	}
 
-	latestCookbook, err := redis.GetKey(Cookbook)
+	latestCookstyle, err := redis.GetKey(Cookstyle)
 	if err != nil {
 		return err
 	}
 
-	if repo.LatestCommit == latestCommit && cookbookVersion == latestCookbook {
+	if repo.LatestCommit == latestCommit && cookstyleVersion == latestCookstyle {
 		// log that we're ending the lifecycle here
 		return nil
 	}
 
 	// If not exists or version is different or sha is different, clone the repo
 	// TODO: This requires an access to a valid SSH key on the lambda
-	err = repo.clone()
+	repoUri := fmt.Sprintf("git@github.com:%s/%s.git", repo.Org, repo.Name)
+	cloneRepoRunner := exec.Command("git", "clone", repoUri)
+	err = repo.clone(cloneRepoRunner)
 	if err != nil {
 		return err
 	}
 
 	// run 'cookstyle -a --format json'
-	out, err := runCookbook()
+	runner := exec.Command("cookstyle", "-a", "--format", "json")
+	out, err := runCookstyle(runner)
 	if err != nil {
 		return err
 	}
 
 	// If cookstyle finds a change, create a new branch 'styleila/cookstyle_<version>'
+	branchRunner := buildBranchCommand(createBranchName(cookstyleVersion))
 	if out.Summary.OffenseCount > 0 {
-		err = createBranch(cookbookVersion)
+		err = createBranch(branchRunner)
 		if err != nil {
 			return err
 		}
@@ -118,7 +129,7 @@ func (h *Handler) handle() error {
 		return err
 	}
 
-	err = redis.UpdateKey(Cookbook, latestCookbook)
+	err = redis.UpdateKey(Cookstyle, latestCookstyle)
 	if err != nil {
 		return err
 	}
