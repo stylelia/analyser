@@ -60,4 +60,3 @@ jobs:
         run: go test -cover
         with:
           working-directory: ${{ matrix.package }}
-

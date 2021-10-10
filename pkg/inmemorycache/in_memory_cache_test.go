@@ -58,3 +58,54 @@ func TestGetSha(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+
+func TestUpdateToolVersion(t *testing.T) {
+	t.Run("Updates a Tool with a version which does not exist", func(t *testing.T) {
+		toolName := "cookstyle"
+		expectedToolVersion := "1.2.3"
+		githubOrg := "stylelia"
+		repoName := "updateToolRepo"
+
+		imc := NewInMemoryCache()
+		err := imc.UpdateToolVersion(ctx, githubOrg, repoName, toolName, expectedToolVersion)
+		assert.NoError(t, err)
+
+		actual, err := imc.GetToolVersion(ctx, githubOrg, repoName, toolName)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedToolVersion, actual)
+	})
+	t.Run("Updates a Tool Field which already exists", func(t *testing.T) {
+		toolName := "cookstyle"
+		toolVersion := "1.0.0"
+		expectedToolVersion := "1.2.3"
+
+		githubOrg := "stylelia"
+		repoName := "updateKeyRepo"
+
+		imc := NewInMemoryCache()
+		err := imc.UpdateToolVersion(ctx, githubOrg, repoName, toolName, toolVersion)
+		assert.NoError(t, err)
+
+		err = imc.UpdateToolVersion(ctx, githubOrg, repoName, toolName, expectedToolVersion)
+		assert.NoError(t, err)
+
+		actual, err := imc.GetToolVersion(ctx, githubOrg, repoName, toolName)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedToolVersion, actual)
+
+	})
+}
+
+func TestGetToolVersion(t *testing.T) {
+	t.Run("Errors when trying to get a Tool Field which does not exist", func(t *testing.T) {
+		githubOrg := "stylelia"
+		repoName := "newKeyRepo"
+		expected := ""
+		toolName := "cookstyle"
+
+		imc := NewInMemoryCache()
+		actual, err := imc.GetToolVersion(ctx, githubOrg, repoName, toolName)
+		assert.EqualError(t, err, imc.KeyNotFoundInCacheError().Error())
+		assert.Equal(t, expected, actual)
+	})
+}

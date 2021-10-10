@@ -33,14 +33,14 @@ func TestConvertRedisPort(t *testing.T) {
 }
 
 func TestUpdateSha(t *testing.T) {
-	t.Run("Updates a Key which does not exist", func(t *testing.T) {
+	t.Run("Updates a Sha Field which does not exist", func(t *testing.T) {
 		sha1 := "b64d5bae3cee6da8c305c0f46f678914cb22e483"
 		githubOrg := "stylelia"
 		repoName := "newKeyRepo"
 		expected := sha1
 
 		r := NewRedis(redisPort, redisHost, redisPassword)
-		defer r.DeleteKey(ctx, githubOrg, repoName)
+		defer r.deleteKey(ctx, githubOrg, repoName)
 		err := r.UpdateCommitSha(ctx, githubOrg, repoName, sha1)
 		assert.NoError(t, err)
 
@@ -48,37 +48,89 @@ func TestUpdateSha(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
-	t.Run("Updates a Key which already exists", func(t *testing.T) {
+	t.Run("Updates a Sha Field which already exists", func(t *testing.T) {
 		sha1 := "b64d5bae3cee6da8c305c0f46f678914cb22e483"
-		sha1Updated := "b64d5bae3cee6da8c305c0f46f678914cb22e600" // End changed to 600.
+		sha1Expected := "b64d5bae3cee6da8c305c0f46f678914cb22e600" // End changed to 600.
 
 		githubOrg := "stylelia"
 		repoName := "updateKeyRepo"
-		expected := sha1Updated
 
-		r := NewRedisCache(redisPort, redisHost, redisPassword)
-		defer r.DeleteKey(ctx, githubOrg, repoName)
+		r := NewRedis(redisPort, redisHost, redisPassword)
+		defer r.deleteKey(ctx, githubOrg, repoName)
 		err := r.UpdateCommitSha(ctx, githubOrg, repoName, sha1)
 		assert.NoError(t, err)
 
-		err = r.UpdateCommitSha(ctx, githubOrg, repoName, sha1Updated)
+		err = r.UpdateCommitSha(ctx, githubOrg, repoName, sha1Expected)
 		assert.NoError(t, err)
 
 		actual, err := r.GetCommitSha(ctx, githubOrg, repoName)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, sha1Expected, actual)
 
 	})
 }
 
 func TestGetSha(t *testing.T) {
-	t.Run("Errors when trying to get a key which does not exist", func(t *testing.T) {
+	t.Run("Errors when trying to get a Sha Field which does not exist", func(t *testing.T) {
 		githubOrg := "stylelia"
 		repoName := "newKeyRepo"
 		expected := ""
 
-		r := NewRedisCache(redisPort, redisHost, redisPassword)
+		r := NewRedis(redisPort, redisHost, redisPassword)
 		actual, err := r.GetCommitSha(ctx, githubOrg, repoName)
+		assert.EqualError(t, err, r.KeyNotFoundInCacheError().Error())
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateToolVersion(t *testing.T) {
+	t.Run("Updates a Tool with a version which does not exist", func(t *testing.T) {
+		toolName := "cookstyle"
+		expectedToolVersion := "1.2.3"
+		githubOrg := "stylelia"
+		repoName := "updateToolRepo"
+
+		r := NewRedis(redisPort, redisHost, redisPassword)
+		defer r.deleteKey(ctx, githubOrg, repoName)
+		err := r.UpdateToolVersion(ctx, githubOrg, repoName, toolName, expectedToolVersion)
+		assert.NoError(t, err)
+
+		actual, err := r.GetToolVersion(ctx, githubOrg, repoName, toolName)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedToolVersion, actual)
+	})
+	t.Run("Updates a Tool Field which already exists", func(t *testing.T) {
+		toolName := "cookstyle"
+		toolVersion := "1.0.0"
+		expectedToolVersion := "1.2.3"
+
+		githubOrg := "stylelia"
+		repoName := "updateKeyRepo"
+
+		r := NewRedis(redisPort, redisHost, redisPassword)
+		defer r.deleteKey(ctx, githubOrg, repoName)
+		err := r.UpdateToolVersion(ctx, githubOrg, repoName, toolName, toolVersion)
+		assert.NoError(t, err)
+
+		err = r.UpdateToolVersion(ctx, githubOrg, repoName, toolName, expectedToolVersion)
+		assert.NoError(t, err)
+
+		actual, err := r.GetToolVersion(ctx, githubOrg, repoName, toolName)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedToolVersion, actual)
+
+	})
+}
+
+func TestGetToolVersion(t *testing.T) {
+	t.Run("Errors when trying to get a Tool Field which does not exist", func(t *testing.T) {
+		githubOrg := "stylelia"
+		repoName := "newKeyRepo"
+		expected := ""
+		toolName := "cookstyle"
+
+		r := NewRedis(redisPort, redisHost, redisPassword)
+		actual, err := r.GetToolVersion(ctx, githubOrg, repoName, toolName)
 		assert.EqualError(t, err, r.KeyNotFoundInCacheError().Error())
 		assert.Equal(t, expected, actual)
 	})
