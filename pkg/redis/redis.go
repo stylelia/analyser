@@ -74,9 +74,3 @@ func (r *Redis) normaliseErrorCode(err error) error {
 	}
 	return err
 }
-
-func (r *Redis) deleteKey(ctx context.Context, githubOrg, repoName string) error {
-	keyPath := r.keyPath(githubOrg, repoName)
-	err := r.client.Del(ctx, keyPath).Err()
-	return r.normaliseErrorCode(err)
-}

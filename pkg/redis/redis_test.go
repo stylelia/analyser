@@ -17,6 +17,18 @@ var (
 	ctx           context.Context = context.Background()
 )
 
+// This is in here as it is only used in tests to clean up after,
+// This is not great, but the linter was complaining a lot
+func (r *Redis) deleteKey(ctx context.Context, githubOrg, repoName string) {
+	keyPath := r.keyPath(githubOrg, repoName)
+	err := r.client.Del(ctx, keyPath).Err()
+	// We are not going to check this error in each test,
+	// so let's just go bang here...
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func convertRedisPort(port string) uint16 {
 	value, err := strconv.ParseUint(port, 10, 16)
 	if err != nil {
