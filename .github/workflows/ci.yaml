@@ -30,9 +30,9 @@ jobs:
     strategy:
       matrix:
         package:
-          - /app/analyser
-          - /pkg/inmemorycache
-          - /pkg/redis
+          - app/analyser
+          - pkg/inmemorycache
+          - pkg/redis
       fail-fast: false
     steps:
       - name: Check out code
@@ -48,9 +48,9 @@ jobs:
     strategy:
       matrix:
         package:
-          - /app/analyser
-          - /pkg/inmemorycache
-          - /pkg/redis
+          - app/analyser
+          - pkg/inmemorycache
+          - pkg/redis
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
