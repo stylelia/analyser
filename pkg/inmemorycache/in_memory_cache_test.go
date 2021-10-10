@@ -1,4 +1,4 @@
-package in_memory_cache
+package inmemorycache
 
 import (
 	"context"
@@ -11,39 +11,37 @@ var ctx context.Context = context.Background()
 
 func TestUpdateSha(t *testing.T) {
 	t.Run("Updates a Key which does not exist", func(t *testing.T) {
-		sha1 := "b64d5bae3cee6da8c305c0f46f678914cb22e483"
+		expectedSha1 := "b64d5bae3cee6da8c305c0f46f678914cb22e483"
 		githubOrg := "stylelia"
 		repoName := "updateKeyRepo"
-		expected := sha1
 
 		imc := InMemoryCache{}
-		err := imc.UpdateCommitSha(ctx, githubOrg, repoName, sha1)
+		err := imc.UpdateCommitSha(ctx, githubOrg, repoName, expectedSha1)
 		assert.NoError(t, err)
 
 		actual, err := imc.GetCommitSha(ctx, githubOrg, repoName)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, expectedSha1, actual)
 
 	})
 
 	t.Run("Updates a Key which already exists", func(t *testing.T) {
 		sha1 := "b64d5bae3cee6da8c305c0f46f678914cb22e483"
-		sha1Updated := "b64d5bae3cee6da8c305c0f46f678914cb22e600" // End changed to 600.
+		expectedSha1 := "b64d5bae3cee6da8c305c0f46f678914cb22e600" // End changed to 600.
 
 		githubOrg := "stylelia"
 		repoName := "updateKeyRepo"
-		expected := sha1Updated
 
 		imc := InMemoryCache{}
 		err := imc.UpdateCommitSha(ctx, githubOrg, repoName, sha1)
 		assert.NoError(t, err)
 
-		err = imc.UpdateCommitSha(ctx, githubOrg, repoName, sha1Updated)
+		err = imc.UpdateCommitSha(ctx, githubOrg, repoName, expectedSha1)
 		assert.NoError(t, err)
 
 		actual, err := imc.GetCommitSha(ctx, githubOrg, repoName)
 		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
+		assert.Equal(t, expectedSha1, actual)
 
 	})
 }
