@@ -36,7 +36,7 @@ func (i *InMemoryCache) KeyNotFoundInCacheError() error {
 	return errors.New("cache: key not found")
 }
 
-func NewInMemoryCache(port uint16, server, password string) *InMemoryCache {
+func NewInMemoryCache() *InMemoryCache {
 	cache := make(map[string]cacheEntry)
 	return &InMemoryCache{cache: cache}
 }

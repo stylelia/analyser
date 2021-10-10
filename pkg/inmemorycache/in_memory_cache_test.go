@@ -15,7 +15,7 @@ func TestUpdateSha(t *testing.T) {
 		githubOrg := "stylelia"
 		repoName := "updateKeyRepo"
 
-		imc := InMemoryCache{}
+		imc := NewInMemoryCache()
 		err := imc.UpdateCommitSha(ctx, githubOrg, repoName, expectedSha1)
 		assert.NoError(t, err)
 
@@ -32,7 +32,7 @@ func TestUpdateSha(t *testing.T) {
 		githubOrg := "stylelia"
 		repoName := "updateKeyRepo"
 
-		imc := InMemoryCache{}
+		imc := NewInMemoryCache()
 		err := imc.UpdateCommitSha(ctx, githubOrg, repoName, sha1)
 		assert.NoError(t, err)
 

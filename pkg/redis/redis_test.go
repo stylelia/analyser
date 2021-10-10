@@ -39,7 +39,7 @@ func TestUpdateSha(t *testing.T) {
 		repoName := "newKeyRepo"
 		expected := sha1
 
-		r := NewRedisCache(redisPort, redisHost, redisPassword)
+		r := NewRedis(redisPort, redisHost, redisPassword)
 		defer r.DeleteKey(ctx, githubOrg, repoName)
 		err := r.UpdateCommitSha(ctx, githubOrg, repoName, sha1)
 		assert.NoError(t, err)
