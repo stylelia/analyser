@@ -1,0 +1,62 @@
+---
+name: ci
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Run yaml Lint
+        uses: actionshub/yamllint@main
+
+  mdl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Run Markdown Lint
+        uses: actionshub/markdownlint@main
+
+  golangci:
+    name: golangci
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - app/analyser
+          - pkg/inmemorycache
+          - pkg/redis
+      fail-fast: false
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ${{ matrix.package }}
+
+  test:
+    needs: [mdl, yamllint, golangci]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - app/analyser
+          - pkg/inmemorycache
+          - pkg/redis
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+      - name: Build
+        run: go test -cover
+        with:
+          working-directory: ${{ matrix.package }}

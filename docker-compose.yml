@@ -1,3 +1,4 @@
+---
 version: "3.2"
 services:
 
@@ -8,20 +9,18 @@ services:
     image: "redis:alpine"
     command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
-     - "${REDIS_PORT}:6379"
-
+      - "${REDIS_PORT}:6379"
     environment:
-     - REDIS_REPLICATION_MODE=master
+      - REDIS_REPLICATION_MODE=master
   redis-commander:
-   networks:
+    networks:
       - redis
-   image: "rediscommander/redis-commander"
-   ports:
+    image: "rediscommander/redis-commander"
+    ports:
       - "8081:8081"
-   environment:
+    environment:
       - REDIS_HOST="redis"
       - REDIS_PORT="6379"
       - REDIS_PASSWORD="${REDIS_PASSWORD}"
 networks:
   redis:
-
