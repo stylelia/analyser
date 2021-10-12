@@ -27,24 +27,24 @@ func NewRedis(port uint16, server, password string) *Redis {
 	return &Redis{client: client}
 }
 
-func (r *Redis) UpdateCommitSha(ctx context.Context, githubOrg, repoName, commitSha string) error {
-	keyPath := r.keyPath(githubOrg, repoName)
-	return r.updateKeyField(ctx, keyPath, commitShaFieldName, commitSha)
-}
-
 func (r *Redis) GetCommitSha(ctx context.Context, githubOrg, repoName string) (string, error) {
 	keyPath := r.keyPath(githubOrg, repoName)
 	return r.getKeyField(ctx, keyPath, commitShaFieldName)
 }
 
-func (r *Redis) UpdateToolVersion(ctx context.Context, githubOrg, repoName, toolName, toolVersion string) error {
+func (r *Redis) UpdateCommitSha(ctx context.Context, githubOrg, repoName, commitSha string) error {
 	keyPath := r.keyPath(githubOrg, repoName)
-	return r.updateKeyField(ctx, keyPath, toolName, toolVersion)
+	return r.updateKeyField(ctx, keyPath, commitShaFieldName, commitSha)
 }
 
 func (r *Redis) GetToolVersion(ctx context.Context, githubOrg, repoName, toolName string) (string, error) {
 	keyPath := r.keyPath(githubOrg, repoName)
 	return r.getKeyField(ctx, keyPath, toolName)
+}
+
+func (r *Redis) UpdateToolVersion(ctx context.Context, githubOrg, repoName, toolName, toolVersion string) error {
+	keyPath := r.keyPath(githubOrg, repoName)
+	return r.updateKeyField(ctx, keyPath, toolName, toolVersion)
 }
 
 func (r *Redis) KeyNotFoundInCacheError() error {
