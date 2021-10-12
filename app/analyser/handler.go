@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 
+	"github.com/google/go-github/v39/github"
 	"github.com/styleila/analyser/pkg/redis"
 )
 
@@ -129,10 +130,25 @@ func (h *Handler) handle() error {
 
 	// Raise a PR for that change
 	// put in pr body nice message based on json response from cookstyle
-	// TODO: Write a printer for PR
 	message := out.PrintMessage(cookstyleVersion)
 
-	// TODO: raise the PR
+	// raise the PR
+	client := createClientWithAuth(ctx)
+
+	title := fmt.Sprintf("Stylelia: updated %s", cookstyleVersion) // TODO: make that nicer because it's shit
+
+	pr := &github.NewPullRequest{
+		Title:               &title,
+		Head:                &repo.LatestCommit, // TODO: prolly change to last commit sha
+		Base:                &branch,
+		Body:                &message,
+		MaintainerCanModify: github.Bool(true),
+	}
+
+	_, _, err = client.PullRequests.Create(ctx, "stylelia", repo.Name, pr) // TODO: make sure that actually works
+	if err != nil {
+		return err
+	}
 
 	// update cache with default branch sha & cookstyle version
 	err = redis.UpdateCommitSha(ctx, org, name, repo.LatestCommit)
