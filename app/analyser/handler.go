@@ -1,10 +1,12 @@
 package analyser
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/styleila/analyser/pkg/redis"
 )
@@ -19,14 +21,10 @@ const (
 
 // Interface for KV store
 type KeyValueStore interface {
-	GetKey(key string) (string, error)
-	UpdateKey(key, value string) error
-}
-
-// Interface for all exec.Command stuff
-type CommandRunner interface {
-	Run() error
-	Output() ([]byte, error)
+	GetCommitSha(context.Context, string, string) (string, error)
+	UpdateCommitSha(context.Context, string, string, string) error
+	GetToolVersion(context.Context, string, string, string) (string, error)
+	UpdateToolVersion(context.Context, string, string, string, string) error
 }
 
 type Handler struct {
@@ -70,9 +68,19 @@ func (h *Handler) handle() error {
 	}
 
 	// Setup redis
-	redis := redis.Redis{}
+	portRaw := os.Getenv("REDIS_PORT")
+	server := os.Getenv("REDIS_SERVER")
+	password := os.Getenv("REDIS_PASSWORD")
 
-	latestCommit, err := redis.GetKey(Commit)
+	port, err := strconv.Atoi(portRaw)
+	if err != nil {
+		return err
+	}
+
+	redis := redis.NewRedis(uint16(port), server, password)
+	ctx := context.Background()
+
+	latestCommit, err := redis.GetCommitSha(ctx, org, name)
 	if err != nil {
 		return err
 	}
@@ -84,7 +92,7 @@ func (h *Handler) handle() error {
 		return err
 	}
 
-	latestCookstyle, err := redis.GetKey(Cookstyle)
+	latestCookstyle, err := redis.GetToolVersion(ctx, org, name, Cookstyle)
 	if err != nil {
 		return err
 	}
@@ -122,14 +130,17 @@ func (h *Handler) handle() error {
 	// Raise a PR for that change
 	// put in pr body nice message based on json response from cookstyle
 	// TODO: Write a printer for PR
+	message := out.PrintMessage(cookstyleVersion)
+
+	// TODO: raise the PR
 
 	// update cache with default branch sha & cookstyle version
-	err = redis.UpdateKey(Commit, repo.LatestCommit)
+	err = redis.UpdateCommitSha(ctx, org, name, repo.LatestCommit)
 	if err != nil {
 		return err
 	}
 
-	err = redis.UpdateKey(Cookstyle, latestCookstyle)
+	err = redis.UpdateToolVersion(ctx, org, name, Cookstyle, cookstyleVersion)
 	if err != nil {
 		return err
 	}
