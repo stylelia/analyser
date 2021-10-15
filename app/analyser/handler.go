@@ -105,7 +105,7 @@ func (h *Handler) handle() error {
 
 	// If not exists or version is different or sha is different, clone the repo
 	// TODO: This requires an access to a valid SSH key on the lambda
-	repoUri := fmt.Sprintf("git@github.com:%s/%s.git", repo.Org, repo.Name)
+	repoUri := fmt.Sprintf("https://%s@github.com:%s/%s.git", os.Getenv("GITHUB_TOKEN"), repo.Org, repo.Name)
 	cloneRepoRunner := exec.Command("git", "clone", repoUri)
 	err = repo.clone(cloneRepoRunner)
 	if err != nil {
