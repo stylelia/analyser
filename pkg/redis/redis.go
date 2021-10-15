@@ -70,7 +70,9 @@ func (r *Redis) updateKeyField(ctx context.Context, keyPath, fieldName, fieldVal
 // Used to reconcile errors into error codes we know that the client can then validate against
 func (r *Redis) normaliseErrorCode(err error) error {
 	if err != nil && err.Error() == redis.Nil.Error() {
-		return r.KeyNotFoundInCacheError()
+		// for now, if the key is not found in the keystore, we'll just omit it
+		// TODO: Introduce logger accross the application and pipe it here as well
+		return nil
 	}
 	return err
 }
