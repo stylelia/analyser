@@ -203,7 +203,11 @@ func (h *Handler) handle() error {
 			existingPr[0].Body = &message
 			updatedPr := existingPr[0]
 			updatedPr.Body = &message
-			client.PullRequests.Edit(ctx, repo.Org, repo.Name, existingPr[0].GetNumber(), updatedPr)
+			_, _, err = client.PullRequests.Edit(ctx, repo.Org, repo.Name, existingPr[0].GetNumber(), updatedPr)
+			if err != nil {
+				h.Log.Errorf("Unable to edit PR: %v", err)
+				return err
+			}
 		}
 	}
 
