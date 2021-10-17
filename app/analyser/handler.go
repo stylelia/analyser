@@ -107,11 +107,9 @@ func (h *Handler) handle() error {
 	// TODO: This requires an access to a valid SSH key on the lambda
 	repoUri := fmt.Sprintf("https://%s@github.com/%s/%s.git", os.Getenv("GITHUB_TOKEN"), repo.Org, repo.Name)
 	cloneRepoRunner := exec.Command("git", "clone", repoUri, WorkingDir)
-	fmt.Println(cloneRepoRunner)
 	cloneRepoRunner.Dir = WorkingDir
 	err = repo.clone(cloneRepoRunner)
 	if err != nil {
-		fmt.Print("Clone fucked")
 		return err
 	}
 
@@ -120,7 +118,6 @@ func (h *Handler) handle() error {
 	runner.Dir = WorkingDir
 	out, err := runCookstyle(runner)
 	if err != nil {
-		fmt.Print("Cookstyle fucked")
 		return err
 
 	}
@@ -129,62 +126,65 @@ func (h *Handler) handle() error {
 	branchName := createBranchName(cookstyleVersion)
 	branchRunner := buildBranchCommand(branchName)
 	branchRunner.Dir = WorkingDir
-	fmt.Println(branchRunner)
+	title := fmt.Sprintf("Stylelia: Cookstyle %s updates", cookstyleVersion)
+	message := out.PrintMessage(cookstyleVersion)
+
 	if out.Summary.OffenseCount > 0 {
+
 		err = gitCmdRunner(branchRunner)
 		if err != nil {
-			fmt.Print("Branch fucked")
 			return err
 		}
 		stageRunner := buildStageCommand()
 		stageRunner.Dir = WorkingDir
 		err = gitCmdRunner(stageRunner)
 		if err != nil {
-			fmt.Print("Stage fucked")
 			return err
 		}
-		commitRunner := buildCommitCommand()
+		commitRunner := buildCommitCommand(os.Getenv("GIT_EMAIL"), os.Getenv("GIT_USERNAME"), title, message)
 		commitRunner.Dir = WorkingDir
 		err = gitCmdRunner(commitRunner)
 		if err != nil {
-			fmt.Print("Commit fucked")
 			return err
 		}
 		pushRunner := buildPushCommand(branchName)
 		pushRunner.Dir = WorkingDir
 		err = gitCmdRunner(pushRunner)
 		if err != nil {
-			fmt.Print("Push fucked")
 			return err
 		}
+
+		// Raise a PR for that change if one does not exist
+		// put in pr body nice message based on json response from cookstyle
+		client := createClientWithAuth(ctx)
+
+		opt := &github.PullRequestListOptions{Head: branchName, State: "open"}
+		existingPr, _, err := client.PullRequests.List(ctx, repo.Org, repo.Name, opt)
+		if err != nil {
+			return err
+		}
+		if len(existingPr) != 1 {
+
+			pr := &github.NewPullRequest{
+				Title:               &title,
+				Head:                &branchName, // TODO: prolly change to last commit sha
+				Base:                &repo.DefaultBranch,
+				Body:                &message,
+				MaintainerCanModify: github.Bool(true),
+			}
+
+			_, _, err = client.PullRequests.Create(ctx, repo.Org, repo.Name, pr)
+			if err != nil {
+				return err
+			}
+		} else if len(existingPr) == 1 {
+			// Update body as there is some change on the PR we should reflect in the text
+			existingPr[0].Body = &message
+			updatedPr := existingPr[0]
+			updatedPr.Body = &message
+			client.PullRequests.Edit(ctx, repo.Org, repo.Name, existingPr[0].GetNumber(), updatedPr)
+		}
 	}
-
-	// Raise a PR for that change
-	// put in pr body nice message based on json response from cookstyle
-	message := out.PrintMessage(cookstyleVersion)
-
-	// raise the PR
-	client := createClientWithAuth(ctx)
-
-	title := fmt.Sprintf("Stylelia: updated %s", cookstyleVersion) // TODO: make that nicer because it's shit
-
-	fmt.Println(title)
-	fmt.Println(&repo.DefaultBranch)
-	fmt.Println(branchName)
-	fmt.Println(message)
-	pr := &github.NewPullRequest{
-		Title:               &title,
-		Head:                &branchName, // TODO: prolly change to last commit sha
-		Base:                &repo.DefaultBranch,
-		Body:                &message,
-		MaintainerCanModify: github.Bool(true),
-	}
-
-	_, _, err = client.PullRequests.Create(ctx, "stylelia", repo.Name, pr) // TODO: make sure that actually works
-	if err != nil {
-		return err
-	}
-
 	// update cache with default branch sha & cookstyle version
 	err = redis.UpdateCommitSha(ctx, org, name, repo.LatestCommit)
 	if err != nil {
@@ -195,8 +195,6 @@ func (h *Handler) handle() error {
 	if err != nil {
 		return err
 	}
-
-	// see: https://github.com/Xorima/github-cookstyle-runner/blob/main/app/entrypoint.ps1#L139 to L157
 
 	return nil
 }

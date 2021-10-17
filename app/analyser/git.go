@@ -22,13 +22,16 @@ func buildStageCommand() *exec.Cmd {
 	return exec.Command("git", "add", "-A")
 }
 
-func buildCommitCommand() *exec.Cmd {
+func buildCommitCommand(userEmail, userName, commitTitle, commitBody string) *exec.Cmd {
 	// https://stackoverflow.com/questions/61797981/how-to-set-git-config-in-aws-lambda
-	return exec.Command("git", "-c", "user.email='jason@avon-lea.co.uk'", "-c", "user.name='Jason Field'", "commit", "-m", "Ran Cookstyle")
+	commit := fmt.Sprintf("\"%v\n\n%v\"", commitTitle, commitBody)
+	commitUserName := fmt.Sprintf("user.name='%v'", userName)
+	commitUserEmail := fmt.Sprintf("user.email='%v'", userEmail)
+	return exec.Command("git", "-c", commitUserEmail, "-c", commitUserName, "commit", "-s", "-m", commit)
 }
 
 func buildPushCommand(branchName string) *exec.Cmd {
-	return exec.Command("git", "push", "-u", "origin", branchName)
+	return exec.Command("git", "push", "-u", "origin", branchName, "-f")
 }
 
 func gitCmdRunner(exec CommandRunner) error {
