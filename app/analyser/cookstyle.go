@@ -84,13 +84,16 @@ func getLatestCookstyle(cookstyleApi string, client *http.Client) (string, error
 }
 
 func (c *CookstyleCheck) PrintMessage(cookstyleVersion string) string {
-	header := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\n", cookstyleVersion, c.Summary.OffenseCount)
+	header := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:", cookstyleVersion, c.Summary.OffenseCount)
 
 	var logs string
 	for _, part := range c.Files {
 		var partial string
-		for _, offenses := range part.Offenses {
-			partial += fmt.Sprintf("Issue found and resolved with %s\n\n%s\n\n", part.Path, offenses.Message)
+		if len(part.Offenses) > 0 {
+			partial += fmt.Sprintf("\nIssue found and resolved with %s\n\n", part.Path)
+			for _, offenses := range part.Offenses {
+				partial += fmt.Sprintf("- %s\n", offenses.Message)
+			}
 		}
 		logs += partial
 	}

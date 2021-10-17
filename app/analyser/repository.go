@@ -82,6 +82,7 @@ func (r *Repository) buildCommitEndpoint(githubApi string) string {
 func (r *Repository) clone(exec CommandRunner) error {
 	err := exec.Run()
 	if err != nil {
+		fmt.Print(err.Error())
 		return err
 	}
 
