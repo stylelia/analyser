@@ -71,8 +71,7 @@ func TestPrintMessage(t *testing.T) {
 		},
 	}
 
-	validMessage := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\nIssue found and resolved with %s\n\n%s\n\nIssue found and resolved with %s\n\n%s\n\n", cookstyleVersion, cookstyleJSON.Summary.OffenseCount, cookstyleJSON.Files[0].Path, cookstyleJSON.Files[0].Offenses[0].Message, cookstyleJSON.Files[1].Path, cookstyleJSON.Files[1].Offenses[0].Message)
-
+	validMessage := fmt.Sprintf("Hi!\n\nI ran Cookstyle %s against this repo and here are the results.\n\nSummary:\nOffence Count: %v\n\nChanges:\nIssue found and resolved with %s\n\n- %s\n\nIssue found and resolved with %s\n\n- %s\n", cookstyleVersion, cookstyleJSON.Summary.OffenseCount, cookstyleJSON.Files[0].Path, cookstyleJSON.Files[0].Offenses[0].Message, cookstyleJSON.Files[1].Path, cookstyleJSON.Files[1].Offenses[0].Message)
 	t.Run("Print message returns a valid message", func(t *testing.T) {
 		out := cookstyleJSON.PrintMessage(cookstyleVersion)
 		assert.Equal(t, validMessage, out)

@@ -79,9 +79,10 @@ func (r *Repository) buildCommitEndpoint(githubApi string) string {
 	return fmt.Sprintf("%s/repos/%s/%s/commits/%s", githubApi, r.Org, r.Name, r.DefaultBranch)
 }
 
-func (r *Repository) clone(exec CommandRunner) error {
+func (r *Repository) Clone(exec CommandRunner) error {
 	err := exec.Run()
 	if err != nil {
+		fmt.Print(err.Error())
 		return err
 	}
 

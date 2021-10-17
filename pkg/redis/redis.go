@@ -27,24 +27,24 @@ func NewRedis(port uint16, server, password string) *Redis {
 	return &Redis{client: client}
 }
 
-func (r *Redis) UpdateCommitSha(ctx context.Context, githubOrg, repoName, commitSha string) error {
-	keyPath := r.keyPath(githubOrg, repoName)
-	return r.updateKeyField(ctx, keyPath, commitShaFieldName, commitSha)
-}
-
 func (r *Redis) GetCommitSha(ctx context.Context, githubOrg, repoName string) (string, error) {
 	keyPath := r.keyPath(githubOrg, repoName)
 	return r.getKeyField(ctx, keyPath, commitShaFieldName)
 }
 
-func (r *Redis) UpdateToolVersion(ctx context.Context, githubOrg, repoName, toolName, toolVersion string) error {
+func (r *Redis) UpdateCommitSha(ctx context.Context, githubOrg, repoName, commitSha string) error {
 	keyPath := r.keyPath(githubOrg, repoName)
-	return r.updateKeyField(ctx, keyPath, toolName, toolVersion)
+	return r.updateKeyField(ctx, keyPath, commitShaFieldName, commitSha)
 }
 
 func (r *Redis) GetToolVersion(ctx context.Context, githubOrg, repoName, toolName string) (string, error) {
 	keyPath := r.keyPath(githubOrg, repoName)
 	return r.getKeyField(ctx, keyPath, toolName)
+}
+
+func (r *Redis) UpdateToolVersion(ctx context.Context, githubOrg, repoName, toolName, toolVersion string) error {
+	keyPath := r.keyPath(githubOrg, repoName)
+	return r.updateKeyField(ctx, keyPath, toolName, toolVersion)
 }
 
 func (r *Redis) KeyNotFoundInCacheError() error {
@@ -70,7 +70,9 @@ func (r *Redis) updateKeyField(ctx context.Context, keyPath, fieldName, fieldVal
 // Used to reconcile errors into error codes we know that the client can then validate against
 func (r *Redis) normaliseErrorCode(err error) error {
 	if err != nil && err.Error() == redis.Nil.Error() {
-		return r.KeyNotFoundInCacheError()
+		// for now, if the key is not found in the keystore, we'll just omit it
+		// TODO: Introduce logger accross the application and pipe it here as well
+		return nil
 	}
 	return err
 }

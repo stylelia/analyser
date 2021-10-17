@@ -150,7 +150,3 @@ func TestBuildCommitEndpoint(t *testing.T) {
 
 	assert.Equal(t, expected, endpoint)
 }
-
-func TestClone(t *testing.T) {
-
-}
