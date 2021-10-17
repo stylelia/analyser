@@ -70,7 +70,7 @@ func (h *Handler) handle() error {
 
 	// Setup redis
 	portRaw := os.Getenv("REDIS_PORT")
-	server := os.Getenv("REDIS_SERVER")
+	server := os.Getenv("REDIS_HOST")
 	password := os.Getenv("REDIS_PASSWORD")
 
 	port, err := strconv.Atoi(portRaw)
