@@ -132,7 +132,13 @@ func TestGetLastCommit(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(response)
+		_, err = w.Write(response)
+		if err != nil {
+			// we should never panic here.
+			// we should never reach here.
+			// we shouldn't use panic.
+			panic(err)
+		}
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(gitBranchHandler))
