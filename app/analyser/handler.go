@@ -45,7 +45,7 @@ func NewHandler(client *http.Client, log *zap.SugaredLogger) Handler {
 func HandleEvent() error {
 	client := &http.Client{}
 	// TODO: make as env flags
-	logger := logger.NewLogger("DEBUG", false)
+	logger := logger.NewLogger(logger.DEBUG, false)
 
 	handler := NewHandler(client, logger)
 
