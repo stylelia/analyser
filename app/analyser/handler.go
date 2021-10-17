@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	Commit    string = "Commit"
-	Cookstyle string = "Cookstyle"
-
+	Commit       string = "Commit"
+	Cookstyle    string = "Cookstyle"
+	WorkingDir   string = "/tmp" // Only wriable location in lambda
 	githubApi    string = "https://api.github.com"
 	cookstyleApi string = "https://rubygems.org/api/v1/versions/cookstyle/latest.json"
 )
@@ -105,25 +105,56 @@ func (h *Handler) handle() error {
 
 	// If not exists or version is different or sha is different, clone the repo
 	// TODO: This requires an access to a valid SSH key on the lambda
-	repoUri := fmt.Sprintf("https://%s@github.com:%s/%s.git", os.Getenv("GITHUB_TOKEN"), repo.Org, repo.Name)
-	cloneRepoRunner := exec.Command("git", "clone", repoUri)
+	repoUri := fmt.Sprintf("https://%s@github.com/%s/%s.git", os.Getenv("GITHUB_TOKEN"), repo.Org, repo.Name)
+	cloneRepoRunner := exec.Command("git", "clone", repoUri, WorkingDir)
+	fmt.Println(cloneRepoRunner)
+	cloneRepoRunner.Dir = WorkingDir
 	err = repo.clone(cloneRepoRunner)
 	if err != nil {
+		fmt.Print("Clone fucked")
 		return err
 	}
 
 	// run 'cookstyle -a --format json'
 	runner := exec.Command("cookstyle", "-a", "--format", "json")
+	runner.Dir = WorkingDir
 	out, err := runCookstyle(runner)
 	if err != nil {
+		fmt.Print("Cookstyle fucked")
 		return err
+
 	}
 
 	// If cookstyle finds a change, create a new branch 'styleila/cookstyle_<version>'
-	branchRunner := buildBranchCommand(createBranchName(cookstyleVersion))
+	branchName := createBranchName(cookstyleVersion)
+	branchRunner := buildBranchCommand(branchName)
+	branchRunner.Dir = WorkingDir
+	fmt.Println(branchRunner)
 	if out.Summary.OffenseCount > 0 {
-		err = createBranch(branchRunner)
+		err = gitCmdRunner(branchRunner)
 		if err != nil {
+			fmt.Print("Branch fucked")
+			return err
+		}
+		stageRunner := buildStageCommand()
+		stageRunner.Dir = WorkingDir
+		err = gitCmdRunner(stageRunner)
+		if err != nil {
+			fmt.Print("Stage fucked")
+			return err
+		}
+		commitRunner := buildCommitCommand()
+		commitRunner.Dir = WorkingDir
+		err = gitCmdRunner(commitRunner)
+		if err != nil {
+			fmt.Print("Commit fucked")
+			return err
+		}
+		pushRunner := buildPushCommand(branchName)
+		pushRunner.Dir = WorkingDir
+		err = gitCmdRunner(pushRunner)
+		if err != nil {
+			fmt.Print("Push fucked")
 			return err
 		}
 	}
@@ -137,10 +168,14 @@ func (h *Handler) handle() error {
 
 	title := fmt.Sprintf("Stylelia: updated %s", cookstyleVersion) // TODO: make that nicer because it's shit
 
+	fmt.Println(title)
+	fmt.Println(&repo.DefaultBranch)
+	fmt.Println(branchName)
+	fmt.Println(message)
 	pr := &github.NewPullRequest{
 		Title:               &title,
-		Head:                &repo.LatestCommit, // TODO: prolly change to last commit sha
-		Base:                &branch,
+		Head:                &branchName, // TODO: prolly change to last commit sha
+		Base:                &repo.DefaultBranch,
 		Body:                &message,
 		MaintainerCanModify: github.Bool(true),
 	}
