@@ -11,11 +11,19 @@ import (
 )
 
 var (
-	redisHost     string          = os.Getenv("REDIS_HOST")
-	redisPort     uint16          = convertRedisPort(os.Getenv("REDIS_PORT"))
+	redisHost     string          = getenv("REDIS_HOST", "redis")
+	redisPort     uint16          = convertRedisPort(getenv("REDIS_PORT", "6379"))
 	redisPassword string          = os.Getenv("REDIS_PASSWORD")
 	ctx           context.Context = context.Background()
 )
+
+func getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
+}
 
 // This is in here as it is only used in tests to clean up after,
 // This is not great, but the linter was complaining a lot
@@ -83,14 +91,14 @@ func TestUpdateSha(t *testing.T) {
 }
 
 func TestGetSha(t *testing.T) {
-	t.Run("Errors when trying to get a Sha Field which does not exist", func(t *testing.T) {
+	t.Run("Returns no error when trying to get a Sha Field which does not exist", func(t *testing.T) {
 		githubOrg := "stylelia"
 		repoName := "newKeyRepo"
 		expected := ""
 
 		r := NewRedis(redisPort, redisHost, redisPassword)
 		actual, err := r.GetCommitSha(ctx, githubOrg, repoName)
-		assert.EqualError(t, err, r.KeyNotFoundInCacheError().Error())
+		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
 }
@@ -135,7 +143,7 @@ func TestUpdateToolVersion(t *testing.T) {
 }
 
 func TestGetToolVersion(t *testing.T) {
-	t.Run("Errors when trying to get a Tool Field which does not exist", func(t *testing.T) {
+	t.Run("Returns no error when trying to get a Tool Field which does not exist", func(t *testing.T) {
 		githubOrg := "stylelia"
 		repoName := "newKeyRepo"
 		expected := ""
@@ -143,7 +151,7 @@ func TestGetToolVersion(t *testing.T) {
 
 		r := NewRedis(redisPort, redisHost, redisPassword)
 		actual, err := r.GetToolVersion(ctx, githubOrg, repoName, toolName)
-		assert.EqualError(t, err, r.KeyNotFoundInCacheError().Error())
+		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
 }

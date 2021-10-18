@@ -58,3 +58,15 @@ jobs:
         uses: actions/setup-go@v2
       - name: Build
         run: cd ${{ matrix.package }} && go test -cover
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: "6379"
+          REDIS_PASSWORD: SuperSecretCIPassword123!
+    services:
+      redis:
+        image: bitnami/redis:latest
+        ports:
+          - 6379:6379
+        env:
+          REDIS_REPLICATION_MODE: master
+          REDIS_PASSWORD: SuperSecretCIPassword123!
