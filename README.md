@@ -1,7 +1,7 @@
 # Stylelia
 
-Welcome to our entry to the 2021 Chef Hackathon by @youshy and @xorima.
-We each came at this with our own desires as outcomes. For @xorima it was a desire to learn more about golang and to build something useful with the language and as a long term Chef contributor it was the perfect opportunity to do just that. For @youshy it was a want to learn more about Chef and the ecosystem, along with a desire to build some cool new solutions to problems people are experiancing every day within the ecosystem.
+Welcome to our entry to the 2021 Chef Hackathon by [Artur Kondas, @youshy](github.com/youshy/) and [Jason Field, @xorima](https://github.com/xorima/).
+We each came at this with our own desires as outcomes. For Jason it was a desire to learn more about golang and to build something useful with the language and as a long term Chef contributor it was the perfect opportunity to do just that. For Artur it was a want to learn more about Chef and the ecosystem, along with a desire to build some cool new solutions to problems people are experiancing every day within the ecosystem.
 
 ## Why does this exist?
 
@@ -33,7 +33,13 @@ The Cache stores the current [Default branch](https://git-scm.com/book/en/v2/Git
 
 For more information on cookstyle see the [Official Documentation](https://docs.chef.io/workstation/cookstyle/), the list of [Cops (What it is checking for)](https://docs.chef.io/workstation/cookstyle/cops/) or the [Github Repository](https://github.com/chef/cookstyle/)
 
-### Prerequisit tools
+---
+
+## Setup
+
+The below section covers setup and running Stylelia
+
+## Prerequisits
 
 The following tools must be installed on your machine ahead of developing or running the solution. Items which are required only for development are marked with `Dev Only` before their name.
 
@@ -84,7 +90,7 @@ go test
 
 If you choose to open Pull Requests on GitHub then an automated CI pipeline will run tests for all the golang packages listed above as well as [markdownlint](https://github.com/markdownlint/markdownlint) and [yaml lint](http://www.yamllint.com/)
 
-## Running Locally
+### Running Locally
 
 During development you might want to run the entire application locally. This is also how we recommend running the tool during the hackathon to remove the prerequists around [AWS accounts](https://aws.amazon.com/). We use a local [AWS Lambda docker container](https://github.com/lambci/docker-lambda) to simulate the desired end state environment with additional tools installed to simulate the [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html) that are used in the production environment.
 
@@ -121,7 +127,7 @@ The output of this should be `null` which shows that there is no error
 Once this has run you should see the Pull Request in your repository. If for some reason you wish to remove the run from the cache you can login to redis-commander and delete the key (see Developing section for details on how to access)
 An example Pull Request can be found [here](https://github.com/stylelia/snort/pull/4) you will also see that the commit message contains the same level of detail as the pull request.
 
-## Running in Production
+## Production
 
 Running in Production is kept out of this repository due to the propriatry nature of this tool and the hosting environment. This tool is designed to run in AWS Lambda and utilise the scale and price advantages that come with lambda's only run when needed nature.
 
