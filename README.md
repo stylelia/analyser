@@ -3,7 +3,7 @@
 Welcome to our entry to the 2021 Chef Hackathon by [Artur Kondas, @youshy](github.com/youshy/) and [Jason Field, @xorima](https://github.com/xorima/).
 We each came at this with our own desires as outcomes. For Jason it was a desire to learn more about golang and to build something useful with the language and as a long term Chef contributor it was the perfect opportunity to do just that. For Artur it was a want to learn more about Chef and the ecosystem, along with a desire to build some cool new solutions to problems people are experiancing every day within the ecosystem.
 
-## Why does this exist?
+## Project Inspiration
 
 Within the Chef ecosystem there is a utility called [Cookstyle](https://docs.chef.io/workstation/cookstyle/), this is a derrivitive of [rubocop](https://github.com/rubocop/rubocop) and provides [static code analysis](https://www.perforce.com/blog/sca/what-static-analysis) to [Chef-Infra](https://www.chef.io/products/chef-infra) Cookbooks and other Ruby based chef tools.
 This is great and enables chef-infra customers to have cookbooks that are inline with chef's recommended best practices, reducing misconfiguration and ensuring a smoother upgrade process to newer versions of Chef-Infra.
@@ -39,7 +39,7 @@ For more information on cookstyle see the [Official Documentation](https://docs.
 
 The below section covers setup and running Stylelia
 
-## Prerequisits
+## Prerequisites
 
 The following tools must be installed on your machine ahead of developing or running the solution. Items which are required only for development are marked with `Dev Only` before their name.
 
