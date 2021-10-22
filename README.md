@@ -1,7 +1,7 @@
 # Stylelia
 
 Welcome to our entry to the 2021 Chef Hackathon by [Artur Kondas, @youshy](github.com/youshy/) and [Jason Field, @xorima](https://github.com/xorima/).
-We each came at this with our own desires as outcomes. For Jason it was a desire to learn more about golang and to build something useful with the language and as a long term Chef contributor it was the perfect opportunity to do just that. For Artur it was a want to learn more about Chef and the ecosystem, along with a desire to build some cool new solutions to problems people are experiancing every day within the ecosystem.
+We each came at this with our own desires as outcomes. For Jason it was a desire to learn more about golang and to build something useful with the language and as a long term Chef contributor it was the perfect opportunity to do just that. For Artur it was a want to learn more about Chef and the ecosystem, along with a desire to build some cool new solutions to problems people are experiencing every day within the ecosystem.
 
 ## Project Inspiration
 
