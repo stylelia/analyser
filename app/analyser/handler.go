@@ -64,6 +64,7 @@ func (h *Handler) handle() error {
 		h.Log.Errorf("Unable to get default branch: %v", err)
 		return err
 	}
+	h.Log.Infof("Got default branch: %s", branch)
 
 	repo := NewRepo(org, name, branch)
 
@@ -114,6 +115,7 @@ func (h *Handler) handle() error {
 		h.Log.Info("All up to date!")
 		return nil
 	}
+	h.Log.Info("Processing changes...")
 
 	// If not exists or version is different or sha is different, clone the repo
 	repoUri := fmt.Sprintf("https://%s@github.com/%s/%s.git", os.Getenv("GITHUB_TOKEN"), repo.Org, repo.Name)
@@ -125,6 +127,7 @@ func (h *Handler) handle() error {
 		return err
 	}
 
+	h.Log.Info("Running cookstyle...")
 	// run 'cookstyle -a --format json'
 	runner := exec.Command("cookstyle", "-a", "--format", "json")
 	runner.Dir = WorkingDir
@@ -134,6 +137,7 @@ func (h *Handler) handle() error {
 		return err
 	}
 
+	h.Log.Info("Creating PR...")
 	// If cookstyle finds a change, create a new branch 'styleila/cookstyle_<version>'
 	branchName := createBranchName(cookstyleVersion)
 	branchRunner := buildBranchCommand(branchName)
@@ -197,6 +201,7 @@ func (h *Handler) handle() error {
 				h.Log.Errorf("Unable to create PR: %v", err)
 				return err
 			}
+			h.Log.Info("PR Raised!")
 
 		} else if len(existingPr) == 1 {
 			// Update body as there is some change on the PR we should reflect in the text
@@ -208,6 +213,7 @@ func (h *Handler) handle() error {
 				h.Log.Errorf("Unable to edit PR: %v", err)
 				return err
 			}
+			h.Log.Info("PR Updated!")
 		}
 	}
 
@@ -217,12 +223,15 @@ func (h *Handler) handle() error {
 		h.Log.Errorf("Unable to update commit sha in Redis: %v", err)
 		return err
 	}
+	h.Log.Info("Redis updated with latest commit sha")
 
 	err = redis.UpdateToolVersion(ctx, org, name, Cookstyle, cookstyleVersion)
 	if err != nil {
 		h.Log.Errorf("Unable to update tool version in Redis: %v", err)
 		return err
 	}
+	h.Log.Info("Redis updated with latest Cookstyle version")
 
+	h.Log.Info("Processing done!")
 	return nil
 }
